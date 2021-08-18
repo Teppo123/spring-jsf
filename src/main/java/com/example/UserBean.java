@@ -1,12 +1,21 @@
 package com.example;
 
+import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.context.annotation.SessionScope;
 
 import com.example.dto.UserDTO;
-import com.google.common.collect.Lists;
 
 import lombok.Data;
 
@@ -15,47 +24,47 @@ import lombok.Data;
 @Data
 public class UserBean {
 
-//	@Inject
-//	private UserWrapperService userService;
+	@Value("${url.getUsers}")
+	private String urlGetUsers;
+
+	@Value("${url.saveUser}")
+	private String urlSaveUser;
+
+	@Value("${url.deleteUser}")
+	private String urlDeleteUser;
+
+	@Autowired
+	private RestTemplate restTemplate;
 
 	private String firstName = "";
 	private String lastName = "";
 
+	private static final Logger LOGGER = LoggerFactory.getLogger(UserBean.class);
+
 	public void add() throws Exception {
-//		this.userService.saveUser(new UserDTO(null, this.firstName, this.lastName, LocalDate.now(), null));
-		// TODO FIXME
+		LOGGER.info("entered /saveUsers");
+		this.restTemplate.postForObject(this.urlSaveUser,
+				UserDTO.builder().firstName(this.firstName).lastName(this.lastName).birthDate(LocalDate.now()).build(),
+				UserDTO.class);
 		this.firstName = "";
 		this.lastName = "";
 	}
 
-	// implicit getter/setter declarations since lombok annotations don't work that
-	// well for xhmtl calls
-
-//	public String getFirstName() {
-//		return this.firstName;
-//	}
-//
-//	public void setFirstName(String firstName) {
-//		this.firstName = firstName;
-//	}
-//
-//	public String getLastName() {
-//		return this.lastName;
-//	}
-//
-//	public void setLastName(String lastName) {
-//		this.lastName = lastName;
-//	}
-//
 	public List<UserDTO> getUsers() throws Exception {
-		// TODO FIXME
-		return Lists.newArrayList(UserDTO.builder().firstName("Jaakko").build());
-//		return this.userService.getUsers();
+		LOGGER.info("entered /index");
+		List<UserDTO> users = Arrays
+				.asList(this.restTemplate.getForEntity(this.urlGetUsers, UserDTO[].class).getBody());
+		LOGGER.info("users = {}", users);
+		return users;
 	}
 
 	public void deleteUser(Long id) throws Exception {
-		// TODO FIXME
-//		this.userService.deleteUserById(id);
+		ResponseEntity<String> response = this.restTemplate.postForEntity(this.urlDeleteUser + "/" + id, null,
+				String.class);
+		Optional<HttpStatus> status = Optional.ofNullable(response).map(ResponseEntity<String>::getStatusCode);
+		if (!status.isPresent()) {
+			throw new IllegalArgumentException(response.getBody());
+		}
 	}
 
 }

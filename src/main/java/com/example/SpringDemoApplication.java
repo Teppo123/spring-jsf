@@ -16,7 +16,7 @@ import javax.faces.webapp.FacesServlet;
 
 @EnableCaching
 @SpringBootApplication
-@ComponentScan//({ "com.example" })
+@ComponentScan
 public class SpringDemoApplication extends SpringBootServletInitializer {
 
 	public static void main(String[] args) {
